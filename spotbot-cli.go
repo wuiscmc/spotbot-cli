@@ -7,8 +7,8 @@ import (
 	"github.com/cosn/firebase"
 )
 
-type CurrentTrack struct {
-	duration string
+type Track struct {
+	duration float64
 	uri      string
 	title    string
 	image    string
@@ -19,10 +19,11 @@ type Spotbot struct {
 	firebase *firebase.Client
 }
 
-func (sp *Spotbot) CurrentTrack() string {
+func (sp *Spotbot) CurrentTrack() Track {
 	value := sp.firebase.Child("current_track", nil, nil).Value()
 	val := value.(map[string]interface{})
-	return val["title"].(string)
+	track := Track{val["duration"].(float64), val["uri"].(string), val["title"].(string), val["image"].(string), val["artists"].(interface{})}
+	return track
 }
 
 func New() *Spotbot {
