@@ -1,7 +1,11 @@
 package spotbot
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"log"
+	"net/http"
 
 	"github.com/CloudCom/firego"
 )
@@ -10,8 +14,12 @@ type Track struct {
 	duration float64
 	uri      string
 	title    string
-	image    string
-	artists  interface{}
+	artist   string
+}
+
+func (track Track) String() string {
+	res := fmt.Sprintf("%s  -  %s", track.title, track.artist)
+	return res
 }
 
 type Player struct {
@@ -39,7 +47,8 @@ func (sp *Spotbot) CurrentTrack() Track {
 }
 
 func toTrack(val map[string]interface{}) Track {
-	return Track{val["duration"].(float64), val["uri"].(string), val["title"].(string), val["image"].(string), val["artists"].(interface{})}
+	artist := val["artists"].([]interface{})[0].(string)
+	return Track{val["duration"].(float64), val["uri"].(string), val["title"].(string), artist}
 }
 
 func (sp *Spotbot) Playing() Playlist {
@@ -80,6 +89,32 @@ func (sp *Spotbot) Pause() {
 func (sp *Spotbot) Play() {
 	ref := sp.fb.Child("player")
 	logError(ref.Set(true))
+}
+
+func (sp *Spotbot) Search(query string) []Track {
+	if query == "" {
+		return nil
+	}
+	url := fmt.Sprintf("http://api.spotify.com/v1/search?limit=20&type=track&market=se&q='%s'", query)
+	fmt.Println(url)
+	res, _ := http.Get(url)
+	defer res.Body.Close()
+	body, _ := ioutil.ReadAll(res.Body)
+	var data map[string]map[string]interface{}
+	json.Unmarshal(body, &data)
+	if data != nil {
+		rawItems := data["tracks"]["items"].([]interface{})
+		tracks := make([]Track, 0)
+		for _, rawItem := range rawItems {
+			item := rawItem.(map[string]interface{})
+			artist := item["artists"].([]interface{})[0].(map[string]interface{})["name"].(string)
+			track := Track{title: item["name"].(string), uri: item["uri"].(string), artist: artist}
+			tracks = append(tracks, track)
+		}
+		return tracks
+	} else {
+		return nil
+	}
 }
 
 func logError(err error) {
