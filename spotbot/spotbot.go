@@ -63,11 +63,6 @@ func (sp *Spotbot) Playing() Playlist {
 	return playlist
 }
 
-func (sp *Spotbot) NextSong() {
-	ref := sp.fb.Child("player/next")
-	logError(ref.Set(true))
-}
-
 func (sp *Spotbot) Shuffle() {
 	ref := sp.fb.Child("playlist/shuffle")
 	shuffle := !sp.IsShuffled()
@@ -81,16 +76,44 @@ func (sp *Spotbot) IsShuffled() bool {
 	return val
 }
 
+func (sp *Spotbot) NextSong() {
+	requestServer("next")
+}
+
 func (sp *Spotbot) Pause() {
-	ref := sp.fb.Child("player/playing")
-	logError(ref.Set(false))
+	requestServer("pause")
 }
 
 func (sp *Spotbot) Play() {
-	ref := sp.fb.Child("player")
-	logError(ref.Set(true))
+	requestServer("play")
 }
 
+func requestServer(action string) {
+	url := "http://office-robot.local:3030/"
+	client := &http.Client{}
+	request, err := http.NewRequest("PUT", url+action, nil)
+	response, err := client.Do(request)
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		defer response.Body.Close()
+		contents, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			log.Fatal(err)
+
+		}
+		fmt.Println("The calculated length is:", len(string(contents)), "for the url:", url)
+		fmt.Println("   ", response.StatusCode)
+		hdr := response.Header
+		for key, value := range hdr {
+			fmt.Println("   ", key, ":", value)
+
+		}
+		fmt.Println(contents)
+
+	}
+
+}
 func (sp *Spotbot) Search(query string) []Track {
 	if query == "" {
 		return nil

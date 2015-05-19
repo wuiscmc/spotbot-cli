@@ -24,13 +24,17 @@ func control(option string, sp *spotbot.Spotbot, opts interface{}) {
 		for _, track := range res {
 			fmt.Println(track)
 		}
+	case "shuffle":
+		sp.Shuffle()
 	}
+
 }
 
 func main() {
 	firebaseUrl := os.Getenv("FIREBASE_URL")
-	if firebaseUrl == "" {
-		fmt.Println("Please set up your FIREBASE_URL env variable first")
+	spotbotServerUrl := os.Getenv("SPOTBOT_SERVER")
+	if firebaseUrl == "" || spotbotServerUrl == "" {
+		fmt.Println("Please set up your FIREBASE_URL and SPOTBOT_SERVER env variables first")
 		return
 	}
 
