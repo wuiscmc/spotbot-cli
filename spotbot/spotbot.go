@@ -90,9 +90,9 @@ func (sp *Spotbot) Play() {
 }
 
 func requestServer(action string) {
-	url := os.Getenv("SPOTBOT_URL")
+	url := os.Getenv("SPOTBOT_SERVER")
 	client := &http.Client{}
-	request, err := http.NewRequest("PUT", url+"player/"+action, nil)
+	request, err := http.NewRequest("PUT", url+"/player/"+action, nil)
 	response, err := client.Do(request)
 	if err != nil {
 		log.Fatal(err)
