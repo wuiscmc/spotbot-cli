@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/CloudCom/firego"
 )
@@ -81,39 +82,29 @@ func (sp *Spotbot) NextSong() {
 }
 
 func (sp *Spotbot) Pause() {
-	requestServer("pause")
+	requestServer("stop")
 }
 
 func (sp *Spotbot) Play() {
-	requestServer("play")
+	requestServer("start")
 }
 
 func requestServer(action string) {
-	url := "http://office-robot.local:3030/"
+	url := os.Getenv("SPOTBOT_URL")
 	client := &http.Client{}
-	request, err := http.NewRequest("PUT", url+action, nil)
+	request, err := http.NewRequest("PUT", url+"player/"+action, nil)
 	response, err := client.Do(request)
 	if err != nil {
 		log.Fatal(err)
 	} else {
 		defer response.Body.Close()
-		contents, err := ioutil.ReadAll(response.Body)
+		_, err := ioutil.ReadAll(response.Body)
 		if err != nil {
 			log.Fatal(err)
-
 		}
-		fmt.Println("The calculated length is:", len(string(contents)), "for the url:", url)
-		fmt.Println("   ", response.StatusCode)
-		hdr := response.Header
-		for key, value := range hdr {
-			fmt.Println("   ", key, ":", value)
-
-		}
-		fmt.Println(contents)
-
 	}
-
 }
+
 func (sp *Spotbot) Search(query string) []Track {
 	if query == "" {
 		return nil
